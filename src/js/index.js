@@ -8,6 +8,7 @@ let snake = null,
   game = null;
 
 let timer = null;
+let speed = 200;
 
 function Square(x, y, classname) { //蛇的身体部件
   this.x = x * sw;
@@ -34,10 +35,10 @@ function Snake() {
   this.tail = null;  //存储蛇尾信息
   this.pos = [];     //蛇各部位坐标
   this.directionNum = {
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 },
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0, rotate: 180 },
+    right: { x: 1, y: 0, rotate: 0 },
+    up: { x: 0, y: -1, rotate: -90 },
+    down: { x: 0, y: 1, rotate: 90 },
   };
 }
 
@@ -80,11 +81,8 @@ Snake.prototype.getNextpos = function () {
   //判断是否撞到自己
   let selfCollied = false;
   this.pos.forEach(function (item) {
-
     if (item[0] == nextpos[0] && item[1] == nextpos[1]) {
       selfCollied = true
-      console.log(nextpos)
-
     };
   });
   if (selfCollied) {
@@ -100,7 +98,10 @@ Snake.prototype.getNextpos = function () {
   //移动
   this.strategies.move.call(this);
   //吃
-  this.strategies.eat.call(this);
+  if (food && food.pos[0] == nextpos[0] && food.pos[1] == nextpos[1]) {
+
+    this.strategies.eat.call(this);
+  }
 };
 Snake.prototype.strategies = {
   move(del) {
@@ -113,14 +114,11 @@ Snake.prototype.strategies = {
     newbody.create()
     //创建新头
     let newhead = new Square(this.head.x / sw + this.direction.x, this.head.y / sh + this.direction.y, 'head')
-
-    newhead.next = newbody
+    newhead.next = newbody  //新头的下一个节点
     newhead.last = null
-
     newhead.create()
-
-    newbody.last = newhead;
-
+    newhead.viewContent.style.transform = 'rotate(' + this.direction.rotate + 'deg)'
+    newbody.last = newhead;  //新身体前一个节点
     this.pos.splice(0, 0, [this.head.x / sw + this.direction.x, this.head.y / sh + this.direction.y])
     this.head = newhead //更新蛇头信息
 
@@ -131,7 +129,9 @@ Snake.prototype.strategies = {
     }
   },
   eat() {
-
+    this.strategies.move.call(this, true)
+    //设计模式简单
+    createFood()
   },
   die() {
     console.log("die");
@@ -143,32 +143,35 @@ snake = new Snake();
 function createFood() {
   let x = null;
   let y = null;
-  let include = 1;
+  let include = true;
   while (include) {
     x = Math.round(Math.random() * (td - 1))
     y = Math.round(Math.random() * (tr - 1))
     snake.pos.forEach(function (item) {
       if (x != item[0] && y != item[1]) {
-        // console.log(item)
-        include = 0;
+        include = false;
       }
     })
   }
   food = new Square(x, y, 'food')
-  food.create();
+  food.pos = [x, y]
+  let foodDom = document.querySelector('#snake .food')
+  if (foodDom) {
+    foodDom.style.left = x * sw + 'px'
+    foodDom.style.top = y * sh + 'px'
+  } else {
+    food.create()
+  }
 }
 
 function Game() {
-
   this.score = 0;
 }
 
 Game.prototype.init = function () {
   snake.init();
-  // snake.getNextpos();
   createFood()
-
-  document.onkeydown = function (e) {
+  document.onkeydown = function (e) {  //控制蛇的方向
     if (e.keyCode == 37 && snake.direction != snake.directionNum.right) {
       snake.direction = snake.directionNum.left
     } else if (e.keyCode == 39 && snake.direction != snake.directionNum.left) {
@@ -178,8 +181,6 @@ Game.prototype.init = function () {
     } else if (e.keyCode == 40 && snake.direction != snake.directionNum.up) {
       snake.direction = snake.directionNum.down
     }
-
-
   }
   this.start();
 }
@@ -187,9 +188,23 @@ Game.prototype.init = function () {
 Game.prototype.start = function () {
   timer = setInterval(function () {
     snake.getNextpos()
-  }, 200)
+  }, speed)
 }
 
 game = new Game();
-game.init();
+
+let startBtn = document.querySelector('.start button');
+console.log(startBtn)
+startBtn.onclick = function () {
+  startBtn.parentNode.style.display = 'none';
+  game.init();
+}
+
+
+// startBtn.addEventListener('click', function () {
+//   startBtn.parentNode.style.display = 'none';
+//   console.log('sdf')
+
+// })
+// game.init();
 
