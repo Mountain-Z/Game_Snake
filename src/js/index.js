@@ -122,7 +122,7 @@ Snake.prototype.strategies = {
     this.pos.splice(0, 0, [this.head.x / sw + this.direction.x, this.head.y / sh + this.direction.y])
     this.head = newhead //更新蛇头信息
 
-    if (!del) {  //如果吃传参数则删
+    if (!del) {  //如果吃传参数否则删
       this.tail.remove()
       this.tail = this.tail.last
       this.pos.pop()
@@ -165,7 +165,7 @@ function createFood() {
 }
 
 function Game() {
-  this.score = 0;
+
 }
 
 Game.prototype.init = function () {
